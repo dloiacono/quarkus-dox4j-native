@@ -1,0 +1,38 @@
+####
+# This Dockerfile is used in order to build a container that runs the Quarkus application in native (no JVM) mode
+#
+# Before building the docker image run:
+#
+# mvn package -Pnative -Dquarkus.native.container-build=true
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/quarkus-docx4j-native .
+#
+# Then run the container using:
+#
+# docker run -i --rm -p 8080:8080 quarkus/quarkus-docx4j-native
+#
+###
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1
+
+RUN mkdir -p deployments/config
+
+WORKDIR /deployments/
+
+COPY target/*-runner /deployments/application
+
+# set up permissions for user `1001`
+RUN chmod 775 /deployments /deployments/application \
+  && chown -R 1001 /deployments \
+  && chmod -R "g+rwX" /deployments \
+  && chown -R 1001:root /deployments \
+  && curl https://www.rpmfind.net/linux/dag/redhat/el7/en/x86_64/dag/RPMS/cabextract-1.4-1.el7.rf.x86_64.rpm -o /tmp/cabextract-1.4-1.el7.rf.x86_64.rpm \
+  && rpm -ihv /tmp/cabextract-1.4-1.el7.rf.x86_64.rpm \
+  && microdnf install fontconfig xorg-x11-font-utils \
+  && curl https://kumisystems.dl.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm -o /tmp/msttcore-fonts-installer-2.6-1.noarch.rpm \
+  && rpm -Uvh /tmp/msttcore-fonts-installer-2.6-1.noarch.rpm
+
+USER 1001
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]

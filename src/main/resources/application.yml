@@ -1,0 +1,12 @@
+
+quarkus:
+  http:
+    port: 9999
+    so-reuse-port: true
+  log:
+    level: INFO
+  vertx:
+    prefer-native-transport: true
+  native:
+    additional-build-args: -H:ResourceConfigurationFiles=resources-config.json,-H:ReflectionConfigurationFiles=reflection-config.json
+    native-image-xmx: 4096m
